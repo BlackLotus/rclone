@@ -4320,12 +4320,11 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			}
 		}
 		err := f.pacer.Call(func() (bool, error) {
-			resp, err := f.c.CreateBucketWithContext(ctx, &req)
+			_, err := f.c.CreateBucketWithContext(ctx, &req)
 			if err != nil {
 				fmt.Printf("CreateBucket error: %v\n", err)
 				return f.shouldRetry(ctx, err)
 			}
-			fmt.Printf("CreateBucket response: %v\n", resp)
 			return false, nil
 		})
 		if err == nil {
