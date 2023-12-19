@@ -4320,19 +4320,25 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 			}
 		}
 		err := f.pacer.Call(func() (bool, error) {
-			_, err := f.c.CreateBucketWithContext(ctx, &req)
-			return f.shouldRetry(ctx, err)
+			resp, err := f.c.CreateBucketWithContext(ctx, &req)
+			if err != nil {
+				fmt.Printf("CreateBucket error: %v\n", err)
+				return f.shouldRetry(ctx, err)
+			}
+			fmt.Printf("CreateBucket response: %v\n", resp)
+			return false, nil
 		})
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
 		if awsErr, ok := err.(awserr.Error); ok {
+			fmt.Printf("AWS Error: %v\n", awsErr)
 			switch awsErr.Code() {
 			case "BucketAlreadyOwnedByYou":
 				err = nil
 			case "BucketAlreadyExists", "BucketNameUnavailable":
 				if f.opt.UseAlreadyExists.Value {
-					// We can trust BucketAlreadyExists to mean not owned by us, so make it non retriable
+					// We can trust BucketAlreadyExists to mean not owned by us, so make it non-retriable
 					err = fserrors.NoRetryError(err)
 				} else {
 					// We can't trust BucketAlreadyExists to mean not owned by us, so ignore it
